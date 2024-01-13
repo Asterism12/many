@@ -25,6 +25,32 @@ func (s *Setter) SetGetterPlugins(plugins []GetterPlugin) {
 }
 
 func (s *Setter) Verify(expression any) error {
+	expressionAnyArray, ok := expression.([]any)
+	if !ok {
+		return fmt.Errorf("expression must be a []any:%v", expression)
+	}
+	for _, expressionAny := range expressionAnyArray {
+		expressionMany, ok := expressionAny.(map[string]any)
+		if !ok {
+			return fmt.Errorf("expression must be a map[string]any:%v", expression)
+		}
+		for _, getterExpression := range expressionMany {
+			switch getterExpression := getterExpression.(type) {
+			case map[string]any:
+				_, ok = getterExpression["router"].(string)
+				if !ok {
+					return fmt.Errorf(
+						"field 'router' of plugin expression must be a string:%v", getterExpression)
+				}
+				_, ok = getterExpression["param"].([]any)
+				if !ok {
+					return fmt.Errorf(
+						"field 'param' of plugin expression must be a []any:%v", getterExpression)
+				}
+				// TODO: add verification of param of plugin
+			}
+		}
+	}
 	return nil
 }
 
