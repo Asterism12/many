@@ -15,6 +15,7 @@ type GetterPlugin interface {
 type Setter struct {
 	getterPlugins map[string]GetterPlugin
 	pluginPrefix  string
+	segmentation  string
 }
 
 func (s *Setter) SetGetterPlugins(plugins []GetterPlugin) {
@@ -37,17 +38,25 @@ func (s *Setter) Verify(expression any) error {
 		for _, getterExpression := range expressionMany {
 			switch getterExpression := getterExpression.(type) {
 			case map[string]any:
-				_, ok = getterExpression["router"].(string)
+				routerString, ok := getterExpression["router"].(string)
 				if !ok {
 					return fmt.Errorf(
 						"field 'router' of plugin expression must be a string:%v", getterExpression)
 				}
-				_, ok = getterExpression["param"].([]any)
+				param, ok := getterExpression["param"].([]any)
 				if !ok {
 					return fmt.Errorf(
 						"field 'param' of plugin expression must be a []any:%v", getterExpression)
 				}
-				// TODO: add verification of param of plugin
+				routers := strings.Split(routerString, s.segmentation)
+				for _, router := range routers {
+					if plugin, ok := s.getPlugin(router); ok {
+						// TODO: verification of param of plugin needs to be changed
+						if err := plugin.Verify(param); err != nil {
+							return err
+						}
+					}
+				}
 			}
 		}
 	}
@@ -57,7 +66,7 @@ func (s *Setter) Verify(expression any) error {
 func (s *Setter) Get(data, expression any) any {
 	switch expression := expression.(type) {
 	case string:
-		return s.GetByRouter(data, strings.Split(expression, "."), nil)
+		return s.GetByRouter(data, strings.Split(expression, s.segmentation), nil)
 	case []any:
 		return s.GetBySlice(data, expression)
 	case map[string]any:
@@ -90,7 +99,7 @@ func (s *Setter) GetBySlice(data any, expressions []any) []any {
 }
 
 func (s *Setter) GetByObject(data any, expressions map[string]any) any {
-	return s.GetByRouter(data, strings.Split(expressions["router"].(string), "."), expressions["param"].([]any))
+	return s.GetByRouter(data, strings.Split(expressions["router"].(string), s.segmentation), expressions["param"].([]any))
 }
 
 func (s *Setter) getPlugin(expression string) (GetterPlugin, bool) {
@@ -115,21 +124,21 @@ func (s *Setter) Set(src any, dst any, phases []map[string]any) any {
 				if k == "#mode" {
 					continue
 				}
-				dst = s.SetByRouter(dst, strings.Split(k, "."), s.Get(src, v))
+				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), s.Get(src, v))
 			}
 		case "literal":
 			for k, v := range phase {
 				if k == "#mode" {
 					continue
 				}
-				dst = s.SetByRouter(dst, strings.Split(k, "."), v)
+				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), v)
 			}
 		case "constraint":
 			for k, v := range phase {
 				if k == "#mode" {
 					continue
 				}
-				dst = s.SetByRouter(dst, strings.Split(k, "."), v)
+				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), v)
 			}
 		}
 	}
