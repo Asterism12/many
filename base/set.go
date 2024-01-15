@@ -8,7 +8,7 @@ import (
 // GetterPlugin Getter插件
 type GetterPlugin interface {
 	Exec(s *Setter, data any, expression []string, param []any) any
-	Verify(param []any) error
+	Verify(param []any) ([]any, error)
 	Name() string
 }
 
@@ -51,8 +51,9 @@ func (s *Setter) Verify(expression any) error {
 				routers := strings.Split(routerString, s.segmentation)
 				for _, router := range routers {
 					if plugin, ok := s.getPlugin(router); ok {
-						// TODO: verification of param of plugin needs to be changed
-						if err := plugin.Verify(param); err != nil {
+						var err error
+						param, err = plugin.Verify(param)
+						if err != nil {
 							return err
 						}
 					}
@@ -99,7 +100,9 @@ func (s *Setter) GetBySlice(data any, expressions []any) []any {
 }
 
 func (s *Setter) GetByObject(data any, expressions map[string]any) any {
-	return s.GetByRouter(data, strings.Split(expressions["router"].(string), s.segmentation), expressions["param"].([]any))
+	router := strings.Split(expressions["router"].(string), s.segmentation)
+	param := expressions["param"].([]any)
+	return s.GetByRouter(data, router, param)
 }
 
 func (s *Setter) getPlugin(expression string) (GetterPlugin, bool) {
@@ -108,7 +111,6 @@ func (s *Setter) getPlugin(expression string) (GetterPlugin, bool) {
 	}
 	name := strings.TrimPrefix(expression, s.pluginPrefix)
 	plugin, ok := s.getterPlugins[name]
-	fmt.Println(plugin, ok)
 	return plugin, ok
 }
 

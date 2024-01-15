@@ -19,8 +19,8 @@ func (g getPluginArray) Exec(s *base.Setter, data any, expression []string, para
 	return values
 }
 
-func (g getPluginArray) Verify(param []any) error {
-	return nil
+func (g getPluginArray) Verify(param []any) ([]any, error) {
+	return param, nil
 }
 
 func (g getPluginArray) Name() string {
@@ -42,8 +42,8 @@ func (g getPluginKey) Exec(s *base.Setter, data any, expression []string, param 
 	return values
 }
 
-func (g getPluginKey) Verify(param []any) error {
-	return nil
+func (g getPluginKey) Verify(param []any) ([]any, error) {
+	return param, nil
 }
 
 func (g getPluginKey) Name() string {
@@ -82,8 +82,8 @@ func (g getPluginStrict) strict(data any) bool {
 	return true
 }
 
-func (g getPluginStrict) Verify(param []any) error {
-	return nil
+func (g getPluginStrict) Verify(param []any) ([]any, error) {
+	return param, nil
 }
 
 func (g getPluginStrict) Name() string {
