@@ -18,13 +18,6 @@ type Setter struct {
 	segmentation  string
 }
 
-func (s *Setter) SetGetterPlugins(plugins []GetterPlugin) {
-	s.getterPlugins = make(map[string]GetterPlugin, len(plugins))
-	for _, plugin := range plugins {
-		s.getterPlugins[plugin.Name()] = plugin
-	}
-}
-
 func (s *Setter) Verify(expression any) error {
 	expressionAnyArray, ok := expression.([]any)
 	if !ok {
@@ -192,6 +185,17 @@ func (s *Setter) SetByRouter(dst any, router []string, data any) any {
 	return dst
 }
 
+func (s *Setter) SetGetterPlugins(plugins []GetterPlugin) {
+	s.getterPlugins = make(map[string]GetterPlugin, len(plugins))
+	for _, plugin := range plugins {
+		s.getterPlugins[plugin.Name()] = plugin
+	}
+}
+
 func (s *Setter) SetPluginPrefix(prefix string) {
 	s.pluginPrefix = prefix
+}
+
+func (s *Setter) SetSegmentation(segmentation string) {
+	s.segmentation = segmentation
 }

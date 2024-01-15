@@ -48,5 +48,6 @@ func TestExample(t *testing.T) {
 
 	dst := setter.Set(src, nil, expression)
 	fmt.Println(dst)
-	fmt.Println(json.Marshal(dst))
+	bys, err := json.Marshal(dst)
+	fmt.Println(string(bys), err)
 }

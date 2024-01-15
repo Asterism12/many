@@ -15,5 +15,6 @@ func New() Setter {
 	setter := &base.Setter{}
 	setter.SetGetterPlugins(plugins.DefaultPlugins)
 	setter.SetPluginPrefix("#")
+	setter.SetSegmentation(".")
 	return setter
 }
