@@ -11,10 +11,33 @@ type Setter interface {
 	Verify(expression any) error
 }
 
-func New() Setter {
+type Option func(*base.Setter)
+
+func New(opts ...Option) Setter {
 	setter := &base.Setter{}
 	setter.SetGetterPlugins(plugins.DefaultPlugins)
 	setter.SetPluginPrefix("#")
 	setter.SetSegmentation(".")
+	for _, opt := range opts {
+		opt(setter)
+	}
 	return setter
+}
+
+func WithGetterPlugins(ps []base.GetterPlugin) func(*base.Setter) {
+	return func(setter *base.Setter) {
+		setter.SetGetterPlugins(append(plugins.DefaultPlugins, ps...))
+	}
+}
+
+func WithPluginPrefix(prefix string) func(*base.Setter) {
+	return func(setter *base.Setter) {
+		setter.SetPluginPrefix(prefix)
+	}
+}
+
+func WithSegmentation(segmentation string) func(*base.Setter) {
+	return func(setter *base.Setter) {
+		setter.SetSegmentation(segmentation)
+	}
 }
