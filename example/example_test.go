@@ -3,7 +3,7 @@ package example
 import (
 	"encoding/json"
 	"fmt"
-	"many"
+	"github.com/Asterism12/many"
 	"testing"
 )
 

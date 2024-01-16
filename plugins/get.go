@@ -1,7 +1,7 @@
 package plugins
 
 import (
-	"many/base"
+	"github.com/Asterism12/many/base"
 )
 
 type getPluginArray struct {

@@ -1,8 +1,8 @@
 package many
 
 import (
-	"many/base"
-	"many/plugins"
+	"github.com/Asterism12/many/base"
+	"github.com/Asterism12/many/plugins"
 )
 
 type Setter interface {
