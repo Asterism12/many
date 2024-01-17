@@ -107,30 +107,35 @@ func (s *Setter) getPlugin(expression string) (GetterPlugin, bool) {
 	return plugin, ok
 }
 
+func (s *Setter) getPluginName(name string) string {
+	return s.pluginPrefix + name
+}
+
 func (s *Setter) Set(src any, dst any, phases []map[string]any) any {
+	modeField := s.getPluginName("mode")
 	for _, phase := range phases {
-		mode, ok := phase["#mode"]
+		mode, ok := phase[modeField]
 		if !ok {
 			mode = "router"
 		}
 		switch mode {
 		case "router":
 			for k, v := range phase {
-				if k == "#mode" {
+				if k == modeField {
 					continue
 				}
 				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), s.Get(src, v))
 			}
 		case "literal":
 			for k, v := range phase {
-				if k == "#mode" {
+				if k == modeField {
 					continue
 				}
 				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), v)
 			}
 		case "constraint":
 			for k, v := range phase {
-				if k == "#mode" {
+				if k == modeField {
 					continue
 				}
 				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), v)
@@ -144,11 +149,11 @@ func (s *Setter) SetByRouter(dst any, router []string, data any) any {
 	if data == nil {
 		return dst
 	}
-	if router == nil || router[0] == "#this" {
+	if router == nil || router[0] == s.getPluginName("this") {
 		return deepCopy(data)
 	}
 
-	if router[0] == "#array" {
+	if router[0] == s.getPluginName("array") {
 		data, ok := data.([]any)
 		if !ok {
 			return nil
