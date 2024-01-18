@@ -90,6 +90,7 @@ func (p getPluginStrict) Name() string {
 	return "strict"
 }
 
+// DefaultGetterPlugins be set
 var DefaultGetterPlugins = []base.GetterPlugin{
 	getPluginArray{},
 	getPluginKey{},

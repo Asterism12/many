@@ -5,18 +5,20 @@ import (
 	"strings"
 )
 
-// GetterPlugin pr
+// GetterPlugin execute when a router string is equal to result of Name()
 type GetterPlugin interface {
 	Exec(s *Setter, data any, expression []string, param []any) any
 	Verify(param []any) ([]any, error)
 	Name() string
 }
 
+// SetterPlugin execute when value of field 'mode' of phase is equal to result of Name()
 type SetterPlugin interface {
 	Exec(s *Setter, src, dst any, phase map[string]any) (any, map[string]any)
 	Name() string
 }
 
+// Setter provide method 'set' and 'get'
 type Setter struct {
 	getterPlugins map[string]GetterPlugin
 	setterPlugins map[string]SetterPlugin
@@ -24,28 +26,21 @@ type Setter struct {
 	segmentation  string
 }
 
-func (s *Setter) Verify(expression any) error {
-	expressionAnyArray, ok := expression.([]any)
-	if !ok {
-		return fmt.Errorf("expression must be a []any:%v", expression)
-	}
-	for _, expressionAny := range expressionAnyArray {
-		expressionMany, ok := expressionAny.(map[string]any)
-		if !ok {
-			return fmt.Errorf("expression must be a map[string]any:%v", expression)
-		}
-		for _, getterExpression := range expressionMany {
-			switch getterExpression := getterExpression.(type) {
+// Verify return error when phases expression is valid
+func (s *Setter) Verify(phases []map[string]any) error {
+	for _, phase := range phases {
+		for _, expression := range phase {
+			switch expression := expression.(type) {
 			case map[string]any:
-				routerString, ok := getterExpression["router"].(string)
+				routerString, ok := expression["router"].(string)
 				if !ok {
 					return fmt.Errorf(
-						"field 'router' of plugin expression must be a string:%v", getterExpression)
+						"field 'router' of plugin expression must be a string:%v", expression)
 				}
-				param, ok := getterExpression["param"].([]any)
+				param, ok := expression["param"].([]any)
 				if !ok {
 					return fmt.Errorf(
-						"field 'param' of plugin expression must be a []any:%v", getterExpression)
+						"field 'param' of plugin expression must be a []any:%v", expression)
 				}
 				routers := strings.Split(routerString, s.segmentation)
 				for _, router := range routers {
@@ -63,6 +58,7 @@ func (s *Setter) Verify(expression any) error {
 	return nil
 }
 
+// Get get value from data by expression
 func (s *Setter) Get(data, expression any) any {
 	switch expression := expression.(type) {
 	case string:
@@ -76,6 +72,7 @@ func (s *Setter) Get(data, expression any) any {
 	}
 }
 
+// GetByRouter expression is a slice of router string.
 func (s *Setter) GetByRouter(data any, expressions []string, param []any) any {
 	if len(expressions) == 0 {
 		return data
@@ -90,6 +87,8 @@ func (s *Setter) GetByRouter(data any, expressions []string, param []any) any {
 	return s.GetByRouter(m[expressions[0]], expressions[1:], param)
 }
 
+// GetBySlice expression is a []any.
+// Return an array of results of expressions.
 func (s *Setter) GetBySlice(data any, expressions []any) []any {
 	var values []any
 	for _, expression := range expressions {
@@ -98,6 +97,8 @@ func (s *Setter) GetBySlice(data any, expressions []any) []any {
 	return values
 }
 
+// GetByObject expression is a map[string]any.
+// Return the result of target plugin.
 func (s *Setter) GetByObject(data any, expressions map[string]any) any {
 	router := strings.Split(expressions["router"].(string), s.segmentation)
 	param := expressions["param"].([]any)
@@ -113,14 +114,19 @@ func (s *Setter) getGetterPlugin(expression string) (GetterPlugin, bool) {
 	return plugin, ok
 }
 
+// GetPluginName return plugin name with prefix
 func (s *Setter) GetPluginName(name string) string {
 	return s.pluginPrefix + name
 }
 
+// GetSegmentation return segmentation
 func (s *Setter) GetSegmentation() string {
 	return s.segmentation
 }
 
+// Set dst by phases and data of src.
+// Return new value of dst and info of plugins return. The origin dst may be changed.
+// The correct way to use it is -- dst,info = s.Set(src,dst,phases)
 func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string]any) {
 	info := map[string]any{}
 
@@ -156,6 +162,7 @@ func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string
 	return dst, info
 }
 
+// SetByRouter set value of dst by router and data of src
 func (s *Setter) SetByRouter(dst any, router []string, data any) any {
 	if data == nil {
 		return dst
@@ -201,6 +208,7 @@ func (s *Setter) SetByRouter(dst any, router []string, data any) any {
 	return dst
 }
 
+// SetGetterPlugins set getter plugins of setter
 func (s *Setter) SetGetterPlugins(plugins []GetterPlugin) {
 	s.getterPlugins = make(map[string]GetterPlugin, len(plugins))
 	for _, plugin := range plugins {
@@ -208,17 +216,22 @@ func (s *Setter) SetGetterPlugins(plugins []GetterPlugin) {
 	}
 }
 
-func (s *Setter) SetPluginPrefix(prefix string) {
-	s.pluginPrefix = prefix
-}
-
-func (s *Setter) SetSegmentation(segmentation string) {
-	s.segmentation = segmentation
-}
-
+// SetSetterPlugins set setter plugins of setter
 func (s *Setter) SetSetterPlugins(plugins []SetterPlugin) {
 	s.setterPlugins = make(map[string]SetterPlugin, len(plugins))
 	for _, phase := range plugins {
 		s.setterPlugins[phase.Name()] = phase
 	}
+}
+
+// SetPluginPrefix plugin prefix is a string to mark a router string is a pointer to a plugin.
+// Works in both setter and getter.
+func (s *Setter) SetPluginPrefix(prefix string) {
+	s.pluginPrefix = prefix
+}
+
+// SetSegmentation segmentation is a string to split routers.
+// Works in both setter and getter.
+func (s *Setter) SetSegmentation(segmentation string) {
+	s.segmentation = segmentation
 }
