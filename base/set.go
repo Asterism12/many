@@ -12,8 +12,14 @@ type GetterPlugin interface {
 	Name() string
 }
 
+type SetterPlugin interface {
+	Exec(s *Setter, src, dst any, phase map[string]any) (any, map[string]any)
+	Name() string
+}
+
 type Setter struct {
 	getterPlugins map[string]GetterPlugin
+	setterPlugins map[string]SetterPlugin
 	pluginPrefix  string
 	segmentation  string
 }
@@ -43,7 +49,7 @@ func (s *Setter) Verify(expression any) error {
 				}
 				routers := strings.Split(routerString, s.segmentation)
 				for _, router := range routers {
-					if plugin, ok := s.getPlugin(router); ok {
+					if plugin, ok := s.getGetterPlugin(router); ok {
 						var err error
 						param, err = plugin.Verify(param)
 						if err != nil {
@@ -74,7 +80,7 @@ func (s *Setter) GetByRouter(data any, expressions []string, param []any) any {
 	if len(expressions) == 0 {
 		return data
 	}
-	if plugin, ok := s.getPlugin(expressions[0]); ok {
+	if plugin, ok := s.getGetterPlugin(expressions[0]); ok {
 		return plugin.Exec(s, data, expressions[1:], param)
 	}
 	m, ok := data.(map[string]any)
@@ -98,7 +104,7 @@ func (s *Setter) GetByObject(data any, expressions map[string]any) any {
 	return s.GetByRouter(data, router, param)
 }
 
-func (s *Setter) getPlugin(expression string) (GetterPlugin, bool) {
+func (s *Setter) getGetterPlugin(expression string) (GetterPlugin, bool) {
 	if !strings.HasPrefix(expression, s.pluginPrefix) {
 		return nil, false
 	}
@@ -107,12 +113,18 @@ func (s *Setter) getPlugin(expression string) (GetterPlugin, bool) {
 	return plugin, ok
 }
 
-func (s *Setter) getPluginName(name string) string {
+func (s *Setter) GetPluginName(name string) string {
 	return s.pluginPrefix + name
 }
 
-func (s *Setter) Set(src any, dst any, phases []map[string]any) any {
-	modeField := s.getPluginName("mode")
+func (s *Setter) GetSegmentation() string {
+	return s.segmentation
+}
+
+func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string]any) {
+	info := map[string]any{}
+
+	modeField := s.GetPluginName("mode")
 	for _, phase := range phases {
 		mode, ok := phase[modeField]
 		if !ok {
@@ -133,27 +145,26 @@ func (s *Setter) Set(src any, dst any, phases []map[string]any) any {
 				}
 				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), v)
 			}
-		case "constraint":
-			for k, v := range phase {
-				if k == modeField {
-					continue
-				}
-				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), v)
+		default:
+			var pluginInfo map[string]any
+			dst, pluginInfo = s.setterPlugins[mode.(string)].Exec(s, src, dst, phase)
+			for k, v := range pluginInfo {
+				info[k] = v
 			}
 		}
 	}
-	return dst
+	return dst, info
 }
 
 func (s *Setter) SetByRouter(dst any, router []string, data any) any {
 	if data == nil {
 		return dst
 	}
-	if router == nil || router[0] == s.getPluginName("this") {
+	if router == nil || router[0] == s.GetPluginName("this") {
 		return deepCopy(data)
 	}
 
-	if router[0] == s.getPluginName("array") {
+	if router[0] == s.GetPluginName("array") {
 		data, ok := data.([]any)
 		if !ok {
 			return nil
@@ -190,7 +201,7 @@ func (s *Setter) SetByRouter(dst any, router []string, data any) any {
 	return dst
 }
 
-func (s *Setter) SetGetterPlugins(plugins []GetterPlugin) {
+func (s *Setter) SetPlugins(plugins []GetterPlugin) {
 	s.getterPlugins = make(map[string]GetterPlugin, len(plugins))
 	for _, plugin := range plugins {
 		s.getterPlugins[plugin.Name()] = plugin
@@ -203,4 +214,11 @@ func (s *Setter) SetPluginPrefix(prefix string) {
 
 func (s *Setter) SetSegmentation(segmentation string) {
 	s.segmentation = segmentation
+}
+
+func (s *Setter) SetPhases(phases []SetterPlugin) {
+	s.setterPlugins = make(map[string]SetterPlugin, len(phases))
+	for _, phase := range phases {
+		s.setterPlugins[phase.Name()] = phase
+	}
 }

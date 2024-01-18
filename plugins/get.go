@@ -7,7 +7,7 @@ import (
 type getPluginArray struct {
 }
 
-func (g getPluginArray) Exec(s *base.Setter, data any, expression []string, param []any) any {
+func (p getPluginArray) Exec(s *base.Setter, data any, expression []string, param []any) any {
 	arr, ok := data.([]any)
 	if !ok {
 		return nil
@@ -19,18 +19,18 @@ func (g getPluginArray) Exec(s *base.Setter, data any, expression []string, para
 	return values
 }
 
-func (g getPluginArray) Verify(param []any) ([]any, error) {
+func (p getPluginArray) Verify(param []any) ([]any, error) {
 	return param, nil
 }
 
-func (g getPluginArray) Name() string {
+func (p getPluginArray) Name() string {
 	return "array"
 }
 
 type getPluginKey struct {
 }
 
-func (g getPluginKey) Exec(s *base.Setter, data any, expression []string, param []any) any {
+func (p getPluginKey) Exec(s *base.Setter, data any, expression []string, param []any) any {
 	m, ok := data.(map[string]any)
 	if !ok {
 		return nil
@@ -42,27 +42,27 @@ func (g getPluginKey) Exec(s *base.Setter, data any, expression []string, param 
 	return values
 }
 
-func (g getPluginKey) Verify(param []any) ([]any, error) {
+func (p getPluginKey) Verify(param []any) ([]any, error) {
 	return param, nil
 }
 
-func (g getPluginKey) Name() string {
+func (p getPluginKey) Name() string {
 	return "key"
 }
 
 type getPluginStrict struct {
 }
 
-func (g getPluginStrict) Exec(s *base.Setter, data any, expression []string, param []any) any {
+func (p getPluginStrict) Exec(s *base.Setter, data any, expression []string, param []any) any {
 	data = s.GetByRouter(data, expression, param)
-	if g.strict(data) {
+	if p.strict(data) {
 		return data
 	} else {
 		return nil
 	}
 }
 
-func (g getPluginStrict) strict(data any) bool {
+func (p getPluginStrict) strict(data any) bool {
 	if data == nil {
 		return false
 	}
@@ -72,7 +72,7 @@ func (g getPluginStrict) strict(data any) bool {
 	}
 	var values []any
 	for _, datum := range arr {
-		if g.strict(datum) {
+		if p.strict(datum) {
 			values = append(values, datum)
 		}
 	}
@@ -82,11 +82,11 @@ func (g getPluginStrict) strict(data any) bool {
 	return true
 }
 
-func (g getPluginStrict) Verify(param []any) ([]any, error) {
+func (p getPluginStrict) Verify(param []any) ([]any, error) {
 	return param, nil
 }
 
-func (g getPluginStrict) Name() string {
+func (p getPluginStrict) Name() string {
 	return "strict"
 }
 

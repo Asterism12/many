@@ -46,8 +46,7 @@ func TestExample(t *testing.T) {
 	_ = json.Unmarshal(expressionJSON, &expression)
 	_ = json.Unmarshal(srcBys, &src)
 
-	dst := setter.Set(src, nil, expression)
-	fmt.Println(dst)
+	dst, info := setter.Set(src, nil, expression)
 	bys, err := json.Marshal(dst)
-	fmt.Println(string(bys), err)
+	fmt.Println(string(bys), err, info)
 }
