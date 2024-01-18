@@ -42,3 +42,7 @@ func (p schemaVerify) Exec(s *base.Setter, src, dst any, phase map[string]any) (
 func (p schemaVerify) Name() string {
 	return "schema"
 }
+
+var DefaultSetterPlugins = []base.SetterPlugin{
+	schemaVerify{},
+}

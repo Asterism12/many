@@ -5,7 +5,7 @@ import (
 	"github.com/Asterism12/many/plugins"
 )
 
-type Setter interface {
+type Many interface {
 	Set(src any, dst any, phases []map[string]any) (any, map[string]any)
 	Get(data, expression any) any
 	Verify(expression any) error
@@ -13,9 +13,10 @@ type Setter interface {
 
 type Option func(*base.Setter)
 
-func New(opts ...Option) Setter {
+func New(opts ...Option) Many {
 	setter := &base.Setter{}
-	setter.SetPlugins(plugins.DefaultPlugins)
+	setter.SetGetterPlugins(plugins.DefaultGetterPlugins)
+	setter.SetSetterPlugins(plugins.DefaultSetterPlugins)
 	setter.SetPluginPrefix("#")
 	setter.SetSegmentation(".")
 	for _, opt := range opts {
@@ -26,7 +27,13 @@ func New(opts ...Option) Setter {
 
 func WithGetterPlugins(ps []base.GetterPlugin) func(*base.Setter) {
 	return func(setter *base.Setter) {
-		setter.SetPlugins(append(plugins.DefaultPlugins, ps...))
+		setter.SetGetterPlugins(append(plugins.DefaultGetterPlugins, ps...))
+	}
+}
+
+func WithSetterPlugins(ps []base.SetterPlugin) func(*base.Setter) {
+	return func(setter *base.Setter) {
+		setter.SetSetterPlugins(append(plugins.DefaultSetterPlugins, ps...))
 	}
 }
 

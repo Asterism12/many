@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// GetterPlugin Getter插件
+// GetterPlugin pr
 type GetterPlugin interface {
 	Exec(s *Setter, data any, expression []string, param []any) any
 	Verify(param []any) ([]any, error)
@@ -201,7 +201,7 @@ func (s *Setter) SetByRouter(dst any, router []string, data any) any {
 	return dst
 }
 
-func (s *Setter) SetPlugins(plugins []GetterPlugin) {
+func (s *Setter) SetGetterPlugins(plugins []GetterPlugin) {
 	s.getterPlugins = make(map[string]GetterPlugin, len(plugins))
 	for _, plugin := range plugins {
 		s.getterPlugins[plugin.Name()] = plugin
@@ -216,9 +216,9 @@ func (s *Setter) SetSegmentation(segmentation string) {
 	s.segmentation = segmentation
 }
 
-func (s *Setter) SetPhases(phases []SetterPlugin) {
-	s.setterPlugins = make(map[string]SetterPlugin, len(phases))
-	for _, phase := range phases {
+func (s *Setter) SetSetterPlugins(plugins []SetterPlugin) {
+	s.setterPlugins = make(map[string]SetterPlugin, len(plugins))
+	for _, phase := range plugins {
 		s.setterPlugins[phase.Name()] = phase
 	}
 }
