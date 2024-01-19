@@ -40,13 +40,14 @@ func TestExample(t *testing.T) {
   ]
 ]`)
 
-	setter := many.New()
 	var expression []map[string]any
 	var src any
 	_ = json.Unmarshal(expressionJSON, &expression)
 	_ = json.Unmarshal(srcBys, &src)
 
-	dst, info := setter.Set(src, nil, expression)
+	setter := many.New(many.WithPhases(expression))
+	fmt.Println(setter.Verify(nil))
+	dst, info := setter.Set(src, nil, nil)
 	bys, err := json.Marshal(dst)
 	fmt.Println(string(bys), err, info)
 }

@@ -29,7 +29,7 @@ func New(opts ...Option) Many {
 	return setter
 }
 
-// WithGetterPlugins plugins in ps and DefaultGetterPlugins will be set in this Many.
+// WithGetterPlugins set plugins in ps and DefaultGetterPlugins in this Many.
 // The latter overrides the previous if they use a duplicate name.
 func WithGetterPlugins(ps []base.GetterPlugin) func(*base.Setter) {
 	return func(setter *base.Setter) {
@@ -37,7 +37,7 @@ func WithGetterPlugins(ps []base.GetterPlugin) func(*base.Setter) {
 	}
 }
 
-// WithSetterPlugins plugins in ps and DefaultSetterPlugins will be set in this Many.
+// WithSetterPlugins set plugins in ps and DefaultSetterPlugins in this Many.
 // The latter overrides the previous if they use a duplicate name.
 func WithSetterPlugins(ps []base.SetterPlugin) func(*base.Setter) {
 	return func(setter *base.Setter) {
@@ -60,5 +60,13 @@ func WithPluginPrefix(prefix string) func(*base.Setter) {
 func WithSegmentation(segmentation string) func(*base.Setter) {
 	return func(setter *base.Setter) {
 		setter.SetSegmentation(segmentation)
+	}
+}
+
+// WithPhases set default phases in this Many.
+// default phases is used in Set when phases is nil
+func WithPhases(phases []map[string]any) func(*base.Setter) {
+	return func(setter *base.Setter) {
+		setter.SetDefaultPhases(phases)
 	}
 }

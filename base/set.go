@@ -24,10 +24,15 @@ type Setter struct {
 	setterPlugins map[string]SetterPlugin
 	pluginPrefix  string
 	segmentation  string
+	defaultPhases []map[string]any
 }
 
 // Verify return error when phases expression is valid
+// use defaultPhases when phases is nil.
 func (s *Setter) Verify(phases []map[string]any) error {
+	if phases == nil {
+		phases = s.defaultPhases
+	}
 	for _, phase := range phases {
 		for _, expression := range phase {
 			switch expression := expression.(type) {
@@ -128,8 +133,11 @@ func (s *Setter) GetSegmentation() string {
 // Return new value of dst and info of plugins return. The origin dst may be changed.
 // The correct way to use it is -- dst,info = s.Set(src,dst,phases)
 func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string]any) {
-	info := map[string]any{}
+	if phases == nil {
+		phases = s.defaultPhases
+	}
 
+	info := map[string]any{}
 	modeField := s.GetPluginName("mode")
 	for _, phase := range phases {
 		mode, ok := phase[modeField]
@@ -234,4 +242,9 @@ func (s *Setter) SetPluginPrefix(prefix string) {
 // Works in both setter and getter.
 func (s *Setter) SetSegmentation(segmentation string) {
 	s.segmentation = segmentation
+}
+
+// SetDefaultPhases defaultPhases is used in Set when phases is nil
+func (s *Setter) SetDefaultPhases(phases []map[string]any) {
+	s.defaultPhases = phases
 }
