@@ -9,8 +9,9 @@ import (
 type schemaVerify struct {
 }
 
-func (p schemaVerify) Exec(s *base.Setter, src, dst any, phase map[string]any) (any, map[string]any) {
-	result := true
+func (p schemaVerify) Exec(s *base.Setter, _, dst any, phase map[string]any) (any, map[string]any) {
+	allValid := true
+	var invalidInfo []any
 	modeField := s.GetPluginName("mode")
 	for k, schemaAny := range phase {
 		if k == modeField {
@@ -18,25 +19,32 @@ func (p schemaVerify) Exec(s *base.Setter, src, dst any, phase map[string]any) (
 		}
 		value := s.GetByRouter(dst, strings.Split(k, s.GetSegmentation()), nil)
 		schema := schemaAny.(string)
+		valid := true
 		switch value := value.(type) {
 		case string:
-			result = result && schema == "string"
+			valid = schema == "string"
 		case float64:
-			result = result && (schema == "number")
+			valid = schema == "number"
 		case json.Number:
 			errNil := func(_ any, err error) bool {
 				return err == nil
 			}
-			result = result && (schema == "number" || (schema == "int" && errNil(value.Int64())))
+			valid = schema == "number" || (schema == "int" && errNil(value.Int64()))
 		case []any:
-			result = result && (schema == "array")
+			valid = schema == "array"
 		case map[string]any:
-			result = result && (schema == "object")
+			valid = schema == "object"
+		case bool:
+			valid = schema == "bool"
 		default:
-			result = result && (schema == "null" && value == nil)
+			valid = schema == "null"
+		}
+		if valid == false {
+			allValid = false
+			invalidInfo = append(invalidInfo, map[string]any{"field": k, "want": schema, "value": value})
 		}
 	}
-	return dst, map[string]any{"schema": result}
+	return dst, map[string]any{"schema_valid": allValid, "schema_invalid_info": invalidInfo}
 }
 
 func (p schemaVerify) Name() string {
