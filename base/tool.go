@@ -19,7 +19,8 @@ func deepCopy(src any) any {
 	}
 }
 
-func rest[T any](s []T) []T {
+// Rest return rest of slices
+func Rest[T any](s []T) []T {
 	if len(s) <= 1 {
 		return nil
 	}

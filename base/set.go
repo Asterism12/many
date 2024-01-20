@@ -139,6 +139,7 @@ func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string
 
 	info := map[string]any{}
 	modeField := s.GetPluginName("mode")
+	thisField := s.GetPluginName("this")
 	for _, phase := range phases {
 		mode, ok := phase[modeField]
 		if !ok {
@@ -146,15 +147,22 @@ func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string
 		}
 		switch mode {
 		case "router":
+			if v, ok := phase[thisField]; ok {
+				dst = s.SetByRouter(dst, strings.Split(thisField, s.segmentation), s.Get(src, v))
+				fmt.Println("hello world", dst, s.Get(src, v))
+			}
 			for k, v := range phase {
-				if k == modeField {
+				if k == modeField || k == thisField {
 					continue
 				}
 				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), s.Get(src, v))
 			}
 		case "literal":
+			if v, ok := phase[thisField]; ok {
+				dst = s.SetByRouter(dst, strings.Split(thisField, s.segmentation), v)
+			}
 			for k, v := range phase {
-				if k == modeField {
+				if k == modeField || k == thisField {
 					continue
 				}
 				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), v)
@@ -194,14 +202,14 @@ func (s *Setter) SetByRouter(dst any, router []string, data any) any {
 		if len(dst) != 0 {
 			for i, datum := range dst {
 				if i < len(data) {
-					dst[i] = s.SetByRouter(dst[i], rest(router), datum)
+					dst[i] = s.SetByRouter(dst[i], Rest(router), datum)
 				}
 			}
 			return dst
 		} else {
 			var nv []any
 			for _, datum := range data {
-				nv = append(nv, s.SetByRouter(nil, rest(router), datum))
+				nv = append(nv, s.SetByRouter(nil, Rest(router), datum))
 			}
 			return nv
 		}
@@ -211,7 +219,7 @@ func (s *Setter) SetByRouter(dst any, router []string, data any) any {
 		dst = map[string]any{}
 	}
 	if dst, ok := dst.(map[string]any); ok {
-		dst[router[0]] = s.SetByRouter(dst[router[0]], rest(router), data)
+		dst[router[0]] = s.SetByRouter(dst[router[0]], Rest(router), data)
 	}
 	return dst
 }

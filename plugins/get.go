@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"errors"
 	"github.com/Asterism12/many/base"
 )
 
@@ -90,9 +91,50 @@ func (p getPluginStrict) Name() string {
 	return "strict"
 }
 
+type getPluginSelect struct {
+}
+
+func (g getPluginSelect) Exec(s *base.Setter, data any, expression []string, param []any) any {
+	data = s.GetByRouter(data, expression, base.Rest(param))
+	phase := param[0].(map[string]any)
+	dst, _ := s.Set(data, nil, []map[string]any{phase})
+	return dst
+}
+
+func (g getPluginSelect) Verify(param []any) ([]any, error) {
+	if len(param) == 0 {
+		return nil, errors.New("plugin select needs param")
+	}
+	if _, ok := param[0].(map[string]any); !ok {
+		return nil, errors.New("param of plugin select is not map[string]any")
+	}
+	return base.Rest(param), nil
+}
+
+func (g getPluginSelect) Name() string {
+	return "select"
+}
+
+type getPluginThis struct {
+}
+
+func (g getPluginThis) Exec(s *base.Setter, data any, expression []string, param []any) any {
+	return data
+}
+
+func (g getPluginThis) Verify(param []any) ([]any, error) {
+	return param, nil
+}
+
+func (g getPluginThis) Name() string {
+	return "this"
+}
+
 // DefaultGetterPlugins be set
 var DefaultGetterPlugins = []base.GetterPlugin{
 	getPluginArray{},
 	getPluginKey{},
 	getPluginStrict{},
+	getPluginSelect{},
+	getPluginThis{},
 }

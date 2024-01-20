@@ -51,3 +51,31 @@ func TestExample(t *testing.T) {
 	bys, err := json.Marshal(dst)
 	fmt.Println(string(bys), err, info)
 }
+
+func TestExample2(t *testing.T) {
+	expressionJSON := []byte(`[
+  {
+	"#this":"#this",
+    "a": {
+      "router": "a.#select",
+      "param": [
+        {
+          "a1": "a1"
+        }
+      ]
+    }
+  }
+]`)
+	srcBys := []byte(`{"a":{"a1":"a1","b1":"b1"},"b":123}`)
+
+	var expression []map[string]any
+	var src any
+	_ = json.Unmarshal(expressionJSON, &expression)
+	_ = json.Unmarshal(srcBys, &src)
+
+	setter := many.New(many.WithPhases(expression))
+	fmt.Println(setter.Verify(nil))
+	dst, info := setter.Set(src, nil, nil)
+	bys, err := json.Marshal(dst)
+	fmt.Println(string(bys), err, info)
+}
