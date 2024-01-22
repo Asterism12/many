@@ -66,8 +66,7 @@ func TestExample2(t *testing.T) {
     }
   }
 ]`)
-	//srcBys := []byte(`{"a":{"a1":"a1","b1":"b1"},"b":123}`)
-	srcBys := []byte(`{"a":{"b1":"b1"},"b":123}`)
+	srcBys := []byte(`{"a":{"a1":"a1","b1":"b1"},"b":123}`)
 
 	var expression []map[string]any
 	var src any
