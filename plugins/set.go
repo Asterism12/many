@@ -6,6 +6,14 @@ import (
 	"strings"
 )
 
+const (
+	SchemaValid       = "schema_valid"
+	SchemaInvalidInfo = "schema_invalid_info"
+	Field             = "field"
+	Want              = "want"
+	Value             = "value"
+)
+
 type schemaVerify struct {
 }
 
@@ -41,10 +49,10 @@ func (p schemaVerify) Exec(s *base.Setter, _, dst any, phase map[string]any) (an
 		}
 		if valid == false {
 			allValid = false
-			invalidInfo = append(invalidInfo, map[string]any{"field": k, "want": schema, "value": value})
+			invalidInfo = append(invalidInfo, map[string]any{Field: k, Want: schema, Value: value})
 		}
 	}
-	return dst, map[string]any{"schema_valid": allValid, "schema_invalid_info": invalidInfo}
+	return dst, map[string]any{SchemaValid: allValid, SchemaInvalidInfo: invalidInfo}
 }
 
 func (p schemaVerify) Name() string {

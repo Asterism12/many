@@ -5,6 +5,15 @@ import (
 	"strings"
 )
 
+const (
+	Router  = "router"
+	Literal = "literal"
+	Param   = "param"
+	Mode    = "mode"
+	This    = "this"
+	Array   = "array"
+)
+
 // GetterPlugin execute when a router string is equal to result of Name()
 type GetterPlugin interface {
 	Exec(s *Setter, data any, expression []string, param []any) any
@@ -38,12 +47,12 @@ func (s *Setter) Verify(phases []map[string]any) error {
 		for _, expression := range phase {
 			switch expression := expression.(type) {
 			case map[string]any:
-				routerString, ok := expression["router"].(string)
+				routerString, ok := expression[Router].(string)
 				if !ok {
 					return fmt.Errorf(
 						"field 'router' of plugin expression must be a string:%v", expression)
 				}
-				param, ok := expression["param"].([]any)
+				param, ok := expression[Param].([]any)
 				if !ok {
 					return fmt.Errorf(
 						"field 'param' of plugin expression must be a []any:%v", expression)
@@ -106,8 +115,8 @@ func (s *Setter) GetBySlice(data any, expressions []any) []any {
 // GetByObject expression is a map[string]any.
 // Return the result of target plugin.
 func (s *Setter) GetByObject(data any, expressions map[string]any) any {
-	router := strings.Split(expressions["router"].(string), s.segmentation)
-	param := expressions["param"].([]any)
+	router := strings.Split(expressions[Router].(string), s.segmentation)
+	param := expressions[Param].([]any)
 	return s.GetByRouter(data, router, param)
 }
 
@@ -139,15 +148,15 @@ func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string
 	}
 
 	info := map[string]any{}
-	modeField := s.GetPluginName("mode")
-	thisField := s.GetPluginName("this")
+	modeField := s.GetPluginName(Mode)
+	thisField := s.GetPluginName(This)
 	for _, phase := range phases {
 		mode, ok := phase[modeField]
 		if !ok {
-			mode = "router"
+			mode = Router
 		}
 		switch mode {
-		case "router":
+		case Router:
 			if v, ok := phase[thisField]; ok {
 				dst = s.SetByRouter(dst, strings.Split(thisField, s.segmentation), s.Get(src, v))
 			}
@@ -157,7 +166,7 @@ func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string
 				}
 				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), s.Get(src, v))
 			}
-		case "literal":
+		case Literal:
 			if v, ok := phase[thisField]; ok {
 				dst = s.SetByRouter(dst, strings.Split(thisField, s.segmentation), v)
 			}
@@ -180,11 +189,11 @@ func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string
 
 // SetByRouter set value of dst by router and data of src
 func (s *Setter) SetByRouter(dst any, router []string, data any) any {
-	if router == nil || router[0] == s.GetPluginName("this") {
+	if router == nil || router[0] == s.GetPluginName(This) {
 		return deepCopy(data)
 	}
 
-	if router[0] == s.GetPluginName("array") {
+	if router[0] == s.GetPluginName(Array) {
 		data, ok := data.([]any)
 		if !ok {
 			return nil
