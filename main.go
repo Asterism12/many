@@ -23,6 +23,7 @@ func New(opts ...Option) Many {
 	setter.SetSetterPlugins(plugins.DefaultSetterPlugins)
 	setter.SetPluginPrefix("#")
 	setter.SetSegmentation(".")
+	setter.SetOmitempty(true)
 	for _, opt := range opts {
 		opt(setter)
 	}
@@ -68,5 +69,12 @@ func WithSegmentation(segmentation string) func(*base.Setter) {
 func WithPhases(phases []map[string]any) func(*base.Setter) {
 	return func(setter *base.Setter) {
 		setter.SetDefaultPhases(phases)
+	}
+}
+
+// WithOmitempty delete null value in map[string]any if omitempty is true
+func WithOmitempty(omitempty bool) func(*base.Setter) {
+	return func(setter *base.Setter) {
+		setter.SetOmitempty(omitempty)
 	}
 }

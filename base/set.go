@@ -25,6 +25,7 @@ type Setter struct {
 	pluginPrefix  string
 	segmentation  string
 	defaultPhases []map[string]any
+	omitempty     bool
 }
 
 // Verify return error when phases expression is valid
@@ -149,7 +150,6 @@ func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string
 		case "router":
 			if v, ok := phase[thisField]; ok {
 				dst = s.SetByRouter(dst, strings.Split(thisField, s.segmentation), s.Get(src, v))
-				fmt.Println("hello world", dst, s.Get(src, v))
 			}
 			for k, v := range phase {
 				if k == modeField || k == thisField {
@@ -180,9 +180,6 @@ func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string
 
 // SetByRouter set value of dst by router and data of src
 func (s *Setter) SetByRouter(dst any, router []string, data any) any {
-	if data == nil {
-		return dst
-	}
 	if router == nil || router[0] == s.GetPluginName("this") {
 		return deepCopy(data)
 	}
@@ -220,6 +217,9 @@ func (s *Setter) SetByRouter(dst any, router []string, data any) any {
 	}
 	if dst, ok := dst.(map[string]any); ok {
 		dst[router[0]] = s.SetByRouter(dst[router[0]], Rest(router), data)
+		if s.omitempty && dst[router[0]] == nil {
+			delete(dst, router[0])
+		}
 	}
 	return dst
 }
@@ -255,4 +255,9 @@ func (s *Setter) SetSegmentation(segmentation string) {
 // SetDefaultPhases defaultPhases is used in Set when phases is nil
 func (s *Setter) SetDefaultPhases(phases []map[string]any) {
 	s.defaultPhases = phases
+}
+
+// SetOmitempty delete null value in map[string]any if omitempty is true
+func (s *Setter) SetOmitempty(omitempty bool) {
+	s.omitempty = omitempty
 }
