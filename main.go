@@ -8,7 +8,7 @@ import (
 // Many a converter of schema of map[string]any and []any
 type Many interface {
 	Set(src any, dst any, phases []map[string]any) (any, map[string]any)
-	Get(data, expression any) any
+	Get(root, data, expression any) any
 	Verify(phases []map[string]any) error
 }
 

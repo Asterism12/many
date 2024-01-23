@@ -1,42 +1,8 @@
 package base
 
 import (
-	"reflect"
 	"testing"
 )
-
-func deepEqual(v1, v2 any) bool {
-	switch v1 := v1.(type) {
-	case []any:
-		v2, ok := v2.([]any)
-		if !ok {
-			return false
-		}
-		if len(v1) != len(v2) {
-			return false
-		}
-		valid := true
-		for i := range v1 {
-			valid = valid && deepEqual(v1[i], v2[i])
-		}
-		return valid
-	case map[string]any:
-		v2, ok := v2.(map[string]any)
-		if !ok {
-			return false
-		}
-		if len(v1) != len(v2) {
-			return false
-		}
-		valid := true
-		for i := range v1 {
-			valid = valid && deepEqual(v1[i], v2[i])
-		}
-		return valid
-	default:
-		return reflect.DeepEqual(v1, v2)
-	}
-}
 
 func Test_deepCopy(t *testing.T) {
 	type args struct {
@@ -120,11 +86,11 @@ func Test_deepCopy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := deepCopy(tt.args.src)
-			if !deepEqual(got, tt.want) {
+			if !DeepEqual(got, tt.want) {
 				t.Errorf("deepCopy() = %v, want %v", got, tt.want)
 			}
 			tt.modify(tt.args.src)
-			if !deepEqual(got, tt.want) {
+			if !DeepEqual(got, tt.want) {
 				t.Errorf("after modify = %v, want %v", got, tt.want)
 			}
 		})

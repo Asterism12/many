@@ -21,11 +21,12 @@ func (p schemaVerify) Exec(s *base.Setter, _, dst any, phase map[string]any) (an
 	allValid := true
 	var invalidInfo []any
 	modeField := s.GetPluginName("mode")
+	allowNull := s.GetPluginName("null") == "allow"
 	for k, schemaAny := range phase {
 		if k == modeField {
 			continue
 		}
-		value := s.GetByRouter(dst, strings.Split(k, s.GetSegmentation()), nil)
+		value := s.GetByRouter(dst, dst, strings.Split(k, s.GetSegmentation()), nil)
 		schema := schemaAny.(string)
 		valid := true
 		switch value := value.(type) {
@@ -45,7 +46,7 @@ func (p schemaVerify) Exec(s *base.Setter, _, dst any, phase map[string]any) (an
 		case bool:
 			valid = schema == "bool"
 		default:
-			valid = schema == "null"
+			valid = allowNull || schema == "null"
 		}
 		if valid == false {
 			allValid = false

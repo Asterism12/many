@@ -3,43 +3,9 @@ package plugins
 import (
 	"encoding/json"
 	"github.com/Asterism12/many/base"
-	"reflect"
 	"strings"
 	"testing"
 )
-
-func deepEqual(v1, v2 any) bool {
-	switch v1 := v1.(type) {
-	case []any:
-		v2, ok := v2.([]any)
-		if !ok {
-			return false
-		}
-		if len(v1) != len(v2) {
-			return false
-		}
-		valid := true
-		for i := range v1 {
-			valid = valid && deepEqual(v1[i], v2[i])
-		}
-		return valid
-	case map[string]any:
-		v2, ok := v2.(map[string]any)
-		if !ok {
-			return false
-		}
-		if len(v1) != len(v2) {
-			return false
-		}
-		valid := true
-		for i := range v1 {
-			valid = valid && deepEqual(v1[i], v2[i])
-		}
-		return valid
-	default:
-		return reflect.DeepEqual(v1, v2)
-	}
-}
 
 func Test_schemaVerify_Exec(t *testing.T) {
 	type args struct {
@@ -120,10 +86,10 @@ func Test_schemaVerify_Exec(t *testing.T) {
 			p := schemaVerify{}
 			got, info := p.Exec(tt.args.s, tt.args.src,
 				tt.unmarshal(tt.args.dst, t), tt.unmarshal(tt.args.phase, t).(map[string]any))
-			if !deepEqual(got, tt.unmarshal(tt.want, t)) {
+			if !base.DeepEqual(got, tt.unmarshal(tt.want, t)) {
 				t.Errorf("Exec() got = %v, want %v", got, tt.want)
 			}
-			if !deepEqual(info, tt.unmarshal(tt.want1, t)) {
+			if !base.DeepEqual(info, tt.unmarshal(tt.want1, t)) {
 				t.Errorf("Exec() info = %v, want %v", info, tt.want1)
 			}
 		})

@@ -16,7 +16,7 @@ const (
 
 // GetterPlugin execute when a router string is equal to result of Name()
 type GetterPlugin interface {
-	Exec(s *Setter, data any, expression []string, param []any) any
+	Exec(s *Setter, root, data any, expression []string, param []any) any
 	Verify(param []any) ([]any, error)
 	Name() string
 }
@@ -74,50 +74,50 @@ func (s *Setter) Verify(phases []map[string]any) error {
 }
 
 // Get get value from data by expression
-func (s *Setter) Get(data, expression any) any {
+func (s *Setter) Get(root, data, expression any) any {
 	switch expression := expression.(type) {
 	case string:
-		return s.GetByRouter(data, strings.Split(expression, s.segmentation), nil)
+		return s.GetByRouter(root, data, strings.Split(expression, s.segmentation), nil)
 	case []any:
-		return s.GetBySlice(data, expression)
+		return s.GetBySlice(root, data, expression)
 	case map[string]any:
-		return s.GetByObject(data, expression)
+		return s.GetByObject(root, data, expression)
 	default:
 		return nil
 	}
 }
 
 // GetByRouter expression is a slice of router string.
-func (s *Setter) GetByRouter(data any, expressions []string, param []any) any {
+func (s *Setter) GetByRouter(root any, data any, expressions []string, param []any) any {
 	if len(expressions) == 0 {
 		return data
 	}
 	if plugin, ok := s.getGetterPlugin(expressions[0]); ok {
-		return plugin.Exec(s, data, expressions[1:], param)
+		return plugin.Exec(s, root, data, expressions[1:], param)
 	}
 	m, ok := data.(map[string]any)
 	if !ok {
 		return nil
 	}
-	return s.GetByRouter(m[expressions[0]], expressions[1:], param)
+	return s.GetByRouter(root, m[expressions[0]], expressions[1:], param)
 }
 
 // GetBySlice expression is a []any.
 // Return an array of results of expressions.
-func (s *Setter) GetBySlice(data any, expressions []any) []any {
+func (s *Setter) GetBySlice(root, data any, expressions []any) []any {
 	var values []any
 	for _, expression := range expressions {
-		values = append(values, s.Get(data, expression))
+		values = append(values, s.Get(root, data, expression))
 	}
 	return values
 }
 
 // GetByObject expression is a map[string]any.
 // Return the result of target plugin.
-func (s *Setter) GetByObject(data any, expressions map[string]any) any {
+func (s *Setter) GetByObject(root, data any, expressions map[string]any) any {
 	router := strings.Split(expressions[Router].(string), s.segmentation)
 	param := expressions[Param].([]any)
-	return s.GetByRouter(data, router, param)
+	return s.GetByRouter(root, data, router, param)
 }
 
 func (s *Setter) getGetterPlugin(expression string) (GetterPlugin, bool) {
@@ -158,13 +158,13 @@ func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string
 		switch mode {
 		case Router:
 			if v, ok := phase[thisField]; ok {
-				dst = s.SetByRouter(dst, strings.Split(thisField, s.segmentation), s.Get(src, v))
+				dst = s.SetByRouter(dst, strings.Split(thisField, s.segmentation), s.Get(src, src, v))
 			}
 			for k, v := range phase {
 				if k == modeField || k == thisField {
 					continue
 				}
-				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), s.Get(src, v))
+				dst = s.SetByRouter(dst, strings.Split(k, s.segmentation), s.Get(src, src, v))
 			}
 		case Literal:
 			if v, ok := phase[thisField]; ok {
