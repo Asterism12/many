@@ -55,15 +55,13 @@ func TestExample(t *testing.T) {
 func TestExample2(t *testing.T) {
 	expressionJSON := []byte(`[
   {
-	"#this":"#this",
-    "a": {
-      "router": "a.#select",
-      "param": [
-        {
-          "a1": "a1"
-        }
-      ]
-    }
+    "#this": "#this",
+    "a": [
+      "a.#select",
+      {
+        "a1": "a1"
+      }
+    ]
   }
 ]`)
 	srcBys := []byte(`{"a":{"a1":"a1","b1":"b1"},"b":123}`)
@@ -83,27 +81,25 @@ func TestExample2(t *testing.T) {
 func TestExample3(t *testing.T) {
 	expressionJSON := []byte(`[
   {
-    "res": {
-      "router": "a.#array.#switch.id",
-      "param": [
-        [
-          {
-            "case": 1,
-            "router": "#root.b"
-          },
-          {
-            "case": 2,
-            "literal": "s2"
-          },
-          {
-            "literal": [
-              "default",
-              "literal"
-            ]
-          }
-        ]
+    "res": [
+      "a.#array.#switch.id",
+      [
+        {
+          "case": 1,
+          "router": "#root.b"
+        },
+        {
+          "case": 2,
+          "literal": "s2"
+        },
+        {
+          "literal": [
+            "default",
+            "literal"
+          ]
+        }
       ]
-    }
+    ]
   }
 ]`)
 	srcBys := []byte(`{"a":[{"id":1},{"id":2},{"id":3}],"b":123}`)

@@ -8,7 +8,6 @@ import (
 const (
 	Router  = "router"
 	Literal = "literal"
-	Param   = "param"
 	Mode    = "mode"
 	This    = "this"
 	Array   = "array"
@@ -44,19 +43,23 @@ func (s *Setter) Verify(phases []map[string]any) error {
 		phases = s.defaultPhases
 	}
 	for _, phase := range phases {
+		if mode, ok := phase[s.GetPluginName(Mode)]; ok && mode != Router {
+			continue
+		}
 		for _, expression := range phase {
 			switch expression := expression.(type) {
 			case map[string]any:
-				routerString, ok := expression[Router].(string)
+				return fmt.Errorf("expression of mode router cannnot be map[string]any:%v", expression)
+			case []any:
+				if len(expression) == 0 {
+					return fmt.Errorf("len of expression must greater than 0:%v", expression)
+				}
+				routerString, ok := expression[0].(string)
 				if !ok {
 					return fmt.Errorf(
-						"field 'router' of plugin expression must be a string:%v", expression)
+						"'router' of expression must be a string:%v", expression)
 				}
-				param, ok := expression[Param].([]any)
-				if !ok {
-					return fmt.Errorf(
-						"field 'param' of plugin expression must be a []any:%v", expression)
-				}
+				param := expression[1:]
 				routers := strings.Split(routerString, s.segmentation)
 				for _, router := range routers {
 					if plugin, ok := s.getGetterPlugin(router); ok {
@@ -73,51 +76,40 @@ func (s *Setter) Verify(phases []map[string]any) error {
 	return nil
 }
 
-// Get get value from data by expression
+// Get get value data by expression
 func (s *Setter) Get(root, data, expression any) any {
 	switch expression := expression.(type) {
 	case string:
 		return s.GetByRouter(root, data, strings.Split(expression, s.segmentation), nil)
 	case []any:
 		return s.GetBySlice(root, data, expression)
-	case map[string]any:
-		return s.GetByObject(root, data, expression)
 	default:
 		return nil
 	}
 }
 
-// GetByRouter expression is a slice of router string.
-func (s *Setter) GetByRouter(root any, data any, expressions []string, param []any) any {
-	if len(expressions) == 0 {
+// GetByRouter get value by routers and param.
+func (s *Setter) GetByRouter(root any, data any, routers []string, param []any) any {
+	if len(routers) == 0 {
 		return data
 	}
-	if plugin, ok := s.getGetterPlugin(expressions[0]); ok {
-		return plugin.Exec(s, root, data, expressions[1:], param)
+	if plugin, ok := s.getGetterPlugin(routers[0]); ok {
+		return plugin.Exec(s, root, data, routers[1:], param)
 	}
 	m, ok := data.(map[string]any)
 	if !ok {
 		return nil
 	}
-	return s.GetByRouter(root, m[expressions[0]], expressions[1:], param)
+	return s.GetByRouter(root, m[routers[0]], routers[1:], param)
 }
 
-// GetBySlice expression is a []any.
-// Return an array of results of expressions.
-func (s *Setter) GetBySlice(root, data any, expressions []any) []any {
-	var values []any
-	for _, expression := range expressions {
-		values = append(values, s.Get(root, data, expression))
-	}
-	return values
-}
-
-// GetByObject expression is a map[string]any.
-// Return the result of target plugin.
-func (s *Setter) GetByObject(root, data any, expressions map[string]any) any {
-	router := strings.Split(expressions[Router].(string), s.segmentation)
-	param := expressions[Param].([]any)
-	return s.GetByRouter(root, data, router, param)
+// GetBySlice get value by expressions
+// first element of expressions is declared as router.
+// rest elements are declared as params.
+func (s *Setter) GetBySlice(root, data any, expressions []any) any {
+	router := expressions[0]
+	params := expressions[1:]
+	return s.GetByRouter(root, data, strings.Split(router.(string), s.segmentation), params)
 }
 
 func (s *Setter) getGetterPlugin(expression string) (GetterPlugin, bool) {
