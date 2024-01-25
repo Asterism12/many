@@ -1,14 +1,17 @@
 package plugins
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/Asterism12/many/base"
+	"unsafe"
 )
 
-type getPluginArray struct {
+type getPluginFor struct {
 }
 
-func (p getPluginArray) Exec(s *base.Setter, root, data any, expression []string, param []any) any {
+func (p getPluginFor) Exec(s *base.Setter, root, data any, expression []string, param []any) any {
 	arr, ok := data.([]any)
 	if !ok {
 		return nil
@@ -20,12 +23,12 @@ func (p getPluginArray) Exec(s *base.Setter, root, data any, expression []string
 	return values
 }
 
-func (p getPluginArray) Verify(param []any) ([]any, error) {
+func (p getPluginFor) Verify(param []any) ([]any, error) {
 	return param, nil
 }
 
-func (p getPluginArray) Name() string {
-	return "array"
+func (p getPluginFor) Name() string {
+	return "for"
 }
 
 type getPluginKey struct {
@@ -145,23 +148,76 @@ func (g getPluginRoot) Name() string {
 	return "root"
 }
 
-const Case = "case"
+const (
+	Case       = "case"
+	ModeString = "string"
+	ModeDeep   = "deep"
+)
 
 type getPluginSwitch struct {
 }
 
 func (g getPluginSwitch) Exec(s *base.Setter, root, data any, expression []string, param []any) any {
-	data = s.GetByRouter(root, data, expression, base.Rest(param))
-	cases := param[0].([]any)
-	for _, c := range cases {
+	value := s.GetByRouter(root, data, expression, base.Rest(param))
+	param = param[0].([]any)
+	mode, ok := param[0].(string)
+	if !ok {
+		return g.switchByString(s, root, data, value, param)
+	}
+	switch mode {
+	case ModeDeep:
+		return g.switchByDeep(s, root, data, value, param[1:])
+	case ModeString:
+		return g.switchByString(s, root, data, value, param[1:])
+	default:
+		return g.switchByString(s, root, data, value, param[1:])
+	}
+}
+
+func (g getPluginSwitch) switchByString(s *base.Setter, root, data, value any, param []any) any {
+	cases := param[0].(map[string]any)
+	valueAsString := g.getAsString(value)
+	for c, router := range cases {
+		if c == valueAsString {
+			return s.Get(root, data, router)
+		}
+	}
+	if len(param) == 2 {
+		return s.Get(root, data, param[1])
+	}
+	return nil
+}
+
+func (g getPluginSwitch) getAsString(v any) string {
+	switch v := v.(type) {
+	case string:
+		return v
+	case float64:
+		return fmt.Sprintf("%f", v)
+	case json.Number:
+		return v.String()
+	default:
+		bys, _ := json.Marshal(&v)
+		return string(bys)
+	}
+}
+
+func (g getPluginSwitch) bytesToString(bys []byte) string {
+	return unsafe.String(unsafe.SliceData(bys), len(bys))
+}
+
+func (g getPluginSwitch) switchByDeep(s *base.Setter, root, data, value any, param []any) any {
+	for _, c := range param {
 		c := c.(map[string]any)
 		if caseValue, ok := c[Case]; ok {
-			if base.DeepEqual(data, caseValue) {
+			if base.DeepEqual(value, caseValue) {
 				return g.getValue(s, root, data, c)
 			}
-		} else {
-			return g.getValue(s, root, data, c)
 		}
+	}
+	c := param[len(param)-1].(map[string]any)
+	if _, ok := c[Case]; !ok {
+		return g.getValue(s, root, data, c)
 	}
 	return nil
 }
@@ -191,9 +247,53 @@ func (g getPluginSwitch) Name() string {
 	return "switch"
 }
 
+type getPluginLiteral struct {
+}
+
+func (g getPluginLiteral) Exec(s *base.Setter, root, data any, expression []string, param []any) any {
+	return param[0]
+}
+
+func (g getPluginLiteral) Verify(param []any) ([]any, error) {
+	if len(param) == 0 {
+		return nil, errors.New("plugin literal needs param")
+	}
+	return param[1:], nil
+}
+
+func (g getPluginLiteral) Name() string {
+	return "literal"
+}
+
+type getPluginArray struct {
+}
+
+func (g getPluginArray) Exec(s *base.Setter, root, data any, expression []string, param []any) any {
+	routers := param[0].([]any)
+	result := make([]any, len(routers))
+	for _, router := range param[0].([]any) {
+		result = append(result, s.Get(root, data, router))
+	}
+	return result
+}
+
+func (g getPluginArray) Verify(param []any) ([]any, error) {
+	if len(param) == 0 {
+		return nil, errors.New("plugin array needs param")
+	}
+	if _, ok := param[0].([]any); !ok {
+		return nil, errors.New("plugin array must be []any")
+	}
+	return param[1:], nil
+}
+
+func (g getPluginArray) Name() string {
+	return "array"
+}
+
 // DefaultGetterPlugins be set in Many by default
 var DefaultGetterPlugins = []base.GetterPlugin{
-	getPluginArray{},
+	getPluginFor{},
 	getPluginKey{},
 	getPluginStrict{},
 	getPluginSelect{},

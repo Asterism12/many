@@ -11,7 +11,7 @@ func TestExample(t *testing.T) {
 	expressionJSON := []byte(`[
   {
     "#mode": "router",
-    "#array.result": "#strict.#array.#array.a"
+    "#array.result": "#strict.#for.#for.a"
   }
 ]`)
 	srcBys := []byte(`[
