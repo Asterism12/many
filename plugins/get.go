@@ -149,9 +149,10 @@ func (g getPluginRoot) Name() string {
 }
 
 const (
-	Case       = "case"
-	ModeString = "string"
-	ModeDeep   = "deep"
+	Case        = "case"
+	ModeString  = "string"
+	ModeLiteral = "literal"
+	ModeDeep    = "deep"
 )
 
 type getPluginSwitch struct {
@@ -162,15 +163,17 @@ func (g getPluginSwitch) Exec(s *base.Setter, root, data any, expression []strin
 	param = param[0].([]any)
 	mode, ok := param[0].(string)
 	if !ok {
-		return g.switchByString(s, root, data, value, param)
+		return g.switchByLiteral(value, param)
 	}
 	switch mode {
 	case ModeDeep:
 		return g.switchByDeep(s, root, data, value, param[1:])
 	case ModeString:
 		return g.switchByString(s, root, data, value, param[1:])
+	case ModeLiteral:
+		return g.switchByLiteral(value, param[1:])
 	default:
-		return g.switchByString(s, root, data, value, param[1:])
+		return g.switchByLiteral(value, param[1:])
 	}
 }
 
@@ -184,6 +187,20 @@ func (g getPluginSwitch) switchByString(s *base.Setter, root, data, value any, p
 	}
 	if len(param) == 2 {
 		return s.Get(root, data, param[1])
+	}
+	return nil
+}
+
+func (g getPluginSwitch) switchByLiteral(value any, param []any) any {
+	cases := param[0].(map[string]any)
+	valueAsString := g.getAsString(value)
+	for c, literal := range cases {
+		if c == valueAsString {
+			return literal
+		}
+	}
+	if len(param) == 2 {
+		return param[1]
 	}
 	return nil
 }
@@ -207,7 +224,7 @@ func (g getPluginSwitch) bytesToString(bys []byte) string {
 }
 
 func (g getPluginSwitch) switchByDeep(s *base.Setter, root, data, value any, param []any) any {
-	for _, c := range param {
+	for _, c := range param[0].([]any) {
 		c := c.(map[string]any)
 		if caseValue, ok := c[Case]; ok {
 			if base.DeepEqual(value, caseValue) {
@@ -215,9 +232,8 @@ func (g getPluginSwitch) switchByDeep(s *base.Setter, root, data, value any, par
 			}
 		}
 	}
-	c := param[len(param)-1].(map[string]any)
-	if _, ok := c[Case]; !ok {
-		return g.getValue(s, root, data, c)
+	if len(param) == 2 {
+		return g.getValue(s, root, data, param[1].(map[string]any))
 	}
 	return nil
 }
