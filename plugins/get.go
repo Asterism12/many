@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Asterism12/many/base"
-	"unsafe"
 )
 
 type getPluginFor struct {
@@ -217,10 +216,6 @@ func (g getPluginSwitch) getAsString(v any) string {
 		bys, _ := json.Marshal(&v)
 		return string(bys)
 	}
-}
-
-func (g getPluginSwitch) bytesToString(bys []byte) string {
-	return unsafe.String(unsafe.SliceData(bys), len(bys))
 }
 
 func (g getPluginSwitch) switchByDeep(s *base.Setter, root, data, value any, param []any) any {
