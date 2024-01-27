@@ -23,6 +23,7 @@ type GetterPlugin interface {
 // SetterPlugin execute when value of field 'mode' of phase is equal to result of Name()
 type SetterPlugin interface {
 	Exec(s *Setter, src, dst any, phase map[string]any) (any, map[string]any)
+	Verify(phase map[string]any) error
 	Name() string
 }
 
@@ -43,33 +44,51 @@ func (s *Setter) Verify(phases []map[string]any) error {
 		phases = s.defaultPhases
 	}
 	for _, phase := range phases {
-		if mode, ok := phase[s.GetPluginName(Mode)]; ok && mode != Router {
-			continue
+		mode, ok := phase[s.GetPluginName(Mode)]
+		if !ok {
+			mode = Router
 		}
-		for _, expression := range phase {
-			switch expression := expression.(type) {
-			case map[string]any:
-				return fmt.Errorf("expression of mode router cannnot be map[string]any:%v", expression)
-			case []any:
-				if len(expression) == 0 {
-					return fmt.Errorf("len of expression must greater than 0:%v", expression)
-				}
-				routerString, ok := expression[0].(string)
-				if !ok {
-					return fmt.Errorf(
-						"'router' of expression must be a string:%v", expression)
-				}
-				param := expression[1:]
-				routers := strings.Split(routerString, s.segmentation)
-				for _, router := range routers {
-					if plugin, ok := s.getGetterPlugin(router); ok {
-						var err error
-						param, err = plugin.Verify(param)
-						if err != nil {
-							return err
+		switch mode {
+		case Router:
+			for _, expression := range phase {
+				switch expression := expression.(type) {
+				case map[string]any:
+					return fmt.Errorf("expression of mode router cannnot be map[string]any:%v", expression)
+				case []any:
+					if len(expression) == 0 {
+						return fmt.Errorf("len of expression must greater than 0:%v", expression)
+					}
+					routerString, ok := expression[0].(string)
+					if !ok {
+						return fmt.Errorf(
+							"'router' of expression must be a string:%v", expression)
+					}
+					param := expression[1:]
+					routers := strings.Split(routerString, s.segmentation)
+					for _, router := range routers {
+						if plugin, ok := s.getGetterPlugin(router); ok {
+							var err error
+							param, err = plugin.Verify(param)
+							if err != nil {
+								return err
+							}
 						}
 					}
 				}
+			}
+		case Literal:
+			continue
+		default:
+			name, ok := mode.(string)
+			if !ok {
+				return fmt.Errorf("field %s must be a string:%s", s.GetPluginName(Mode), mode)
+			}
+			plugin, ok := s.setterPlugins[name]
+			if !ok {
+				return fmt.Errorf("setter plugin is not exist:%s", name)
+			}
+			if err := plugin.Verify(phase); err != nil {
+				return fmt.Errorf("phase of plugin:%s err:%w", name, err)
 			}
 		}
 	}

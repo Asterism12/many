@@ -56,6 +56,10 @@ func (p schemaVerify) Exec(s *base.Setter, _, dst any, phase map[string]any) (an
 	return dst, map[string]any{SchemaValid: allValid, SchemaInvalidInfo: invalidInfo}
 }
 
+func (p schemaVerify) Verify(phase map[string]any) error {
+	return nil
+}
+
 func (p schemaVerify) Name() string {
 	return "schema"
 }
