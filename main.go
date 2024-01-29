@@ -78,3 +78,14 @@ func WithOmitempty(omitempty bool) func(*base.Setter) {
 		setter.SetOmitempty(omitempty)
 	}
 }
+
+// WithForArray traverse array to get value by rest of routers when meet an array in GetByRouter.
+//
+// Logic of forArray is as same as plugin 'for'.
+// Set forArray to true allowed you to omit router 'for' in routers.
+// On the other hand it makes the mean of router ambiguous.
+func WithForArray(forArray bool) func(*base.Setter) {
+	return func(setter *base.Setter) {
+		setter.SetForArray(forArray)
+	}
+}

@@ -35,6 +35,7 @@ type Setter struct {
 	segmentation  string
 	defaultPhases []map[string]any
 	omitempty     bool
+	forArray      bool
 }
 
 // Verify return error when phases expression is valid
@@ -109,17 +110,28 @@ func (s *Setter) Get(root, data, expression any) any {
 
 // GetByRouter get value by routers and param.
 func (s *Setter) GetByRouter(root any, data any, routers []string, param []any) any {
-	if len(routers) == 0 {
+	if len(routers) == 0 || (len(routers) == 1 && routers[0] == "") {
 		return data
 	}
 	if plugin, ok := s.getGetterPlugin(routers[0]); ok {
 		return plugin.Exec(s, root, data, routers[1:], param)
 	}
 	m, ok := data.(map[string]any)
-	if !ok {
-		return nil
+	if ok {
+		return s.GetByRouter(root, m[routers[0]], routers[1:], param)
 	}
-	return s.GetByRouter(root, m[routers[0]], routers[1:], param)
+	if s.forArray {
+		arr, ok := data.([]any)
+		if !ok {
+			return nil
+		}
+		var values []any
+		for _, datum := range arr {
+			values = append(values, s.GetByRouter(root, datum, routers, param))
+		}
+		return values
+	}
+	return nil
 }
 
 // GetBySlice get value by expressions
@@ -280,4 +292,13 @@ func (s *Setter) SetDefaultPhases(phases []map[string]any) {
 // SetOmitempty delete null value in map[string]any if omitempty is true
 func (s *Setter) SetOmitempty(omitempty bool) {
 	s.omitempty = omitempty
+}
+
+// SetForArray traverse array to get value by rest of routers when meet an array in GetByRouter.
+//
+// Logic of forArray is as same as plugin 'for'.
+// Set forArray to true allowed you to omit router 'for' in routers.
+// On the other hand it makes the mean of router ambiguous.
+func (s *Setter) SetForArray(forArray bool) {
+	s.forArray = forArray
 }
