@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-func mustUnmarshal(s string) any {
-	var v any
+func mustUnmarshal[T any](s string) T {
+	var v T
 	err := json.Unmarshal([]byte(s), &v)
 	if err != nil {
 		panic(fmt.Errorf("json err %w", err))
@@ -71,8 +71,8 @@ func TestSwitch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data := mustUnmarshal(tt.args.data)
-			expression := mustUnmarshal(tt.args.expression)
+			data := mustUnmarshal[any](tt.args.data)
+			expression := mustUnmarshal[any](tt.args.expression)
 			m := many.New()
 			if err := m.Verify([]map[string]any{{"res": expression}}); (err != nil) != tt.verifyErr {
 				t.Errorf("Verify() = %v, want %v", err, tt.verifyErr)

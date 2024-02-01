@@ -1,13 +1,12 @@
 package tests
 
 import (
-	"fmt"
 	"github.com/Asterism12/many"
 	"github.com/Asterism12/many/base"
 	"testing"
 )
 
-func TestRouter(t *testing.T) {
+func TestGetRouter(t *testing.T) {
 	type args struct {
 		data       string
 		expression string
@@ -52,8 +51,8 @@ func TestRouter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data := mustUnmarshal(tt.args.data)
-			expression := mustUnmarshal(tt.args.expression)
+			data := mustUnmarshal[any](tt.args.data)
+			expression := mustUnmarshal[any](tt.args.expression)
 			m := many.New(tt.opt...)
 			if err := m.Verify([]map[string]any{{"res": expression}}); (err != nil) != tt.verifyErr {
 				t.Errorf("Verify() = %v, want %v", err, tt.verifyErr)
@@ -61,8 +60,46 @@ func TestRouter(t *testing.T) {
 			if !tt.verifyErr {
 				if got := m.Get(data, data, expression); !base.DeepEqual(got, tt.want) {
 					t.Errorf("Get() = %v, want %v", got, tt.want)
-				} else {
-					fmt.Println(got, tt.want)
+				}
+			}
+		})
+	}
+}
+
+func TestSetRouter(t *testing.T) {
+	type args struct {
+		data       string
+		expression string
+	}
+	tests := []struct {
+		name      string
+		args      args
+		want      any
+		verifyErr bool
+		opt       []many.Option
+	}{
+		{
+			name: "slice",
+			args: args{
+				data:       `{"info":{"type":[]}}`,
+				expression: `[{"#this":"info"}]`,
+			},
+			want: map[string]any{
+				"type": []any{},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data := mustUnmarshal[any](tt.args.data)
+			expression := mustUnmarshal[[]map[string]any](tt.args.expression)
+			m := many.New(tt.opt...)
+			if err := m.Verify(expression); (err != nil) != tt.verifyErr {
+				t.Errorf("Verify() = %v, want %v", err, tt.verifyErr)
+			}
+			if !tt.verifyErr {
+				if got, _ := m.Set(data, data, expression); !base.DeepEqual(got, tt.want) {
+					t.Errorf("Get() = %v, want %v", got, tt.want)
 				}
 			}
 		})

@@ -3,7 +3,7 @@ package base
 func deepCopy(src any) any {
 	switch src := src.(type) {
 	case []any:
-		var dst []any
+		dst := []any{}
 		for _, v := range src {
 			dst = append(dst, deepCopy(v))
 		}
