@@ -58,9 +58,7 @@ func TestExample2(t *testing.T) {
     "#this": "#this",
     "a": [
       "a.#select",
-      {
-        "a1": "a1"
-      }
+      ["a1"]
     ]
   }
 ]`)
