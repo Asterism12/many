@@ -88,6 +88,17 @@ func TestSetRouter(t *testing.T) {
 				"type": []any{},
 			},
 		},
+		{
+			name: "redirect-src",
+			args: args{
+				data:       `{"type1":"apple","type2":"fruit"}`,
+				expression: `[{"type1":"type2"},{"type3":"type1"}]`,
+			},
+			want: map[string]any{
+				"type1": "fruit",
+				"type3": "fruit",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -98,7 +109,7 @@ func TestSetRouter(t *testing.T) {
 				t.Errorf("Verify() = %v, want %v", err, tt.verifyErr)
 			}
 			if !tt.verifyErr {
-				if got, _ := m.Set(data, data, expression); !base.DeepEqual(got, tt.want) {
+				if got, _ := m.Set(data, nil, expression); !base.DeepEqual(got, tt.want) {
 					t.Errorf("Get() = %v, want %v", got, tt.want)
 				}
 			}

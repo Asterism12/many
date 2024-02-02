@@ -24,6 +24,7 @@ func New(opts ...Option) Many {
 	setter.SetPluginPrefix("#")
 	setter.SetSegmentation(".")
 	setter.SetOmitempty(true)
+	setter.SetRedirectSrc(true)
 	for _, opt := range opts {
 		opt(setter)
 	}
@@ -87,5 +88,12 @@ func WithOmitempty(omitempty bool) func(*base.Setter) {
 func WithForArray(forArray bool) func(*base.Setter) {
 	return func(setter *base.Setter) {
 		setter.SetForArray(forArray)
+	}
+}
+
+// WithRedirectSrc set src to dst while a phase finished in Set
+func WithRedirectSrc(redirectSrc bool) func(*base.Setter) {
+	return func(setter *base.Setter) {
+		setter.SetRedirectSrc(redirectSrc)
 	}
 }

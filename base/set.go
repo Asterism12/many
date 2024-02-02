@@ -36,6 +36,7 @@ type Setter struct {
 	defaultPhases []map[string]any
 	omitempty     bool
 	forArray      bool
+	redirectSrc   bool
 }
 
 // Verify return error when phases expression is valid
@@ -206,6 +207,9 @@ func (s *Setter) Set(src any, dst any, phases []map[string]any) (any, map[string
 				info[k] = v
 			}
 		}
+		if s.redirectSrc {
+			src = dst
+		}
 	}
 	return dst, info
 }
@@ -301,4 +305,9 @@ func (s *Setter) SetOmitempty(omitempty bool) {
 // On the other hand it makes the mean of router ambiguous.
 func (s *Setter) SetForArray(forArray bool) {
 	s.forArray = forArray
+}
+
+// SetRedirectSrc set src to dst while a phase finished in Set
+func (s *Setter) SetRedirectSrc(redirectSrc bool) {
+	s.redirectSrc = redirectSrc
 }
