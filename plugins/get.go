@@ -98,7 +98,11 @@ type getPluginSelect struct {
 
 func (g getPluginSelect) Exec(s *base.Setter, root, data any, expression []string, param []any) any {
 	data = s.GetByRouter(root, data, expression, base.Rest(param))
-	phase := param[0].(map[string]any)
+	fields := param[0].([]any)
+	phase := map[string]any{}
+	for _, field := range fields {
+		phase[field.(string)] = field
+	}
 	dst, _ := s.Set(data, nil, []map[string]any{phase})
 	return dst
 }
@@ -107,8 +111,14 @@ func (g getPluginSelect) Verify(param []any) ([]any, error) {
 	if len(param) == 0 {
 		return nil, errors.New("plugin select needs param")
 	}
-	if _, ok := param[0].(map[string]any); !ok {
-		return nil, errors.New("param of plugin select is not map[string]any")
+	fields, ok := param[0].([]any)
+	if !ok {
+		return nil, errors.New("param of plugin select must be []any")
+	}
+	for _, field := range fields {
+		if _, ok = field.(string); !ok {
+			return nil, errors.New("field of plugin select must be string")
+		}
 	}
 	return base.Rest(param), nil
 }
@@ -249,7 +259,7 @@ func (g getPluginSwitch) Verify(param []any) ([]any, error) {
 	}
 	_, ok := param[0].([]any)
 	if !ok {
-		return nil, errors.New("param of plugin switch is not []any")
+		return nil, errors.New("param of plugin switch must be []any")
 	}
 	return base.Rest(param), nil
 }

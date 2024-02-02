@@ -87,3 +87,58 @@ func TestSwitch(t *testing.T) {
 		})
 	}
 }
+
+func TestSelect(t *testing.T) {
+	type args struct {
+		data       string
+		expression string
+	}
+	tests := []struct {
+		name      string
+		args      args
+		want      any
+		verifyErr bool
+	}{
+		{
+			name: "standard",
+			args: args{
+				data:       `{"fields":{"field1":1,"field2":2,"field3":3}}`,
+				expression: `["fields.#select",["field2","field3"]]`,
+			},
+			want: map[string]any{"field2": float64(2), "field3": float64(3)},
+		},
+		{
+			name: "deep",
+			args: args{
+				data:       `{"fields":{"field1":{"field2":2,"field3":3}}}`,
+				expression: `["fields.#select",["field1.field2"]]`,
+			},
+			want: map[string]any{"field1": map[string]any{"field2": float64(2)}},
+		},
+		{
+			name: "verify-err",
+			args: args{
+				data:       `{"fields":{"field1":{"field2":2,"field3":3}}}`,
+				expression: `["fields.#select",[123]]`,
+			},
+			verifyErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data := mustUnmarshal[any](tt.args.data)
+			expression := mustUnmarshal[any](tt.args.expression)
+			m := many.New()
+			if err := m.Verify([]map[string]any{{"res": expression}}); (err != nil) != tt.verifyErr {
+				t.Errorf("Verify() = %v, want %v", err, tt.verifyErr)
+			}
+			if !tt.verifyErr {
+				if got := m.Get(data, data, expression); !base.DeepEqual(got, tt.want) {
+					t.Errorf("Get() = %v, want %v", got, tt.want)
+				} else {
+					fmt.Println(got, tt.want)
+				}
+			}
+		})
+	}
+}
