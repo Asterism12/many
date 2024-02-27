@@ -233,9 +233,9 @@ func (s *Setter) SetByRouter(dst any, router []string, data any) any {
 			return dst
 		}
 		if len(dst) != 0 {
-			for i, datum := range dst {
+			for i := range dst {
 				if i < len(data) {
-					dst[i] = s.SetByRouter(dst[i], Rest(router), datum)
+					dst[i] = s.SetByRouter(dst[i], Rest(router), data[i])
 				}
 			}
 			return dst

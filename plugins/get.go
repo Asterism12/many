@@ -321,4 +321,6 @@ var DefaultGetterPlugins = []base.GetterPlugin{
 	getPluginThis{},
 	getPluginRoot{},
 	getPluginSwitch{},
+	getPluginLiteral{},
+	getPluginArray{},
 }

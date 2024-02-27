@@ -99,6 +99,18 @@ func TestSetRouter(t *testing.T) {
 				"type3": "fruit",
 			},
 		},
+		{
+			name: "array-for",
+			args: args{
+				data:       `{"owns":[{"name":"apple","type":"fruit"}]}`,
+				expression: `[{"#array.type":"owns.#for.type"}]`,
+			},
+			want: []any{
+				map[string]any{
+					"type": "fruit",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
