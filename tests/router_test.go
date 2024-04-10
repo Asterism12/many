@@ -111,6 +111,16 @@ func TestSetRouter(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "mode-new",
+			args: args{
+				data:       `{}`,
+				expression: `[{"#mode":"literal","name":"apple"},{"#mode":"clean"},{"#mode":"literal","type":"fruit"}]`,
+			},
+			want: map[string]any{
+				"type": "fruit",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

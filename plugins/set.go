@@ -64,6 +64,21 @@ func (p schemaVerify) Name() string {
 	return "schema"
 }
 
+type clean struct{}
+
+func (p clean) Exec(s *base.Setter, src, dst any, phase map[string]any) (any, map[string]any) {
+	return nil, nil
+}
+
+func (p clean) Verify(phase map[string]any) error {
+	return nil
+}
+
+func (p clean) Name() string {
+	return "clean"
+}
+
 var DefaultSetterPlugins = []base.SetterPlugin{
 	schemaVerify{},
+	clean{},
 }
