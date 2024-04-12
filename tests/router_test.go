@@ -112,10 +112,10 @@ func TestSetRouter(t *testing.T) {
 			},
 		},
 		{
-			name: "mode-new",
+			name: "setter-plugin-new-router",
 			args: args{
-				data:       `{}`,
-				expression: `[{"#mode":"literal","name":"apple"},{"#mode":"clean"},{"#mode":"literal","type":"fruit"}]`,
+				data:       `{"type":"fruit"}`,
+				expression: `[{"#this":"#this"},{"#mode":"literal","name":"apple"},{"#mode":"new","type":"type"}]`,
 			},
 			want: map[string]any{
 				"type": "fruit",

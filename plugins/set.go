@@ -64,21 +64,32 @@ func (p schemaVerify) Name() string {
 	return "schema"
 }
 
-type clean struct{}
+type newRouter struct{}
 
-func (p clean) Exec(s *base.Setter, src, dst any, phase map[string]any) (any, map[string]any) {
-	return nil, nil
+func (p newRouter) Exec(s *base.Setter, src, dst any, phase map[string]any) (any, map[string]any) {
+	dst = nil
+	thisField := s.GetPluginName(base.This)
+	if v, ok := phase[thisField]; ok {
+		dst = s.SetByRouter(dst, strings.Split(thisField, s.GetSegmentation()), s.Get(src, src, v))
+	}
+	for k, v := range phase {
+		if k == thisField {
+			continue
+		}
+		dst = s.SetByRouter(dst, strings.Split(k, s.GetSegmentation()), s.Get(src, src, v))
+	}
+	return dst, nil
 }
 
-func (p clean) Verify(phase map[string]any) error {
+func (p newRouter) Verify(phase map[string]any) error {
 	return nil
 }
 
-func (p clean) Name() string {
-	return "clean"
+func (p newRouter) Name() string {
+	return "new"
 }
 
 var DefaultSetterPlugins = []base.SetterPlugin{
 	schemaVerify{},
-	clean{},
+	newRouter{},
 }
