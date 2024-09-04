@@ -249,6 +249,9 @@ func (s *Setter) SetByRouter(dst any, router []string, data any) any {
 	}
 
 	if dst == nil {
+		if data == nil {
+			return nil
+		}
 		dst = map[string]any{}
 	}
 	if dst, ok := dst.(map[string]any); ok {

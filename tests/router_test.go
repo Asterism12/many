@@ -89,6 +89,24 @@ func TestSetRouter(t *testing.T) {
 			},
 		},
 		{
+			name: "field-empty",
+			args: args{
+				data:       `{}`,
+				expression: `[{"info.type":"info.type"}]`,
+			},
+			want: nil,
+		},
+		{
+			name: "field_level2-empty",
+			args: args{
+				data:       `{"info":{}}`,
+				expression: `[{"#mode":"literal","info":{}},{"info.type":"info.type"}]`,
+			},
+			want: map[string]any{
+				"info": map[string]any{},
+			},
+		},
+		{
 			name: "redirect-src",
 			args: args{
 				data:       `{"type1":"apple","type2":"fruit"}`,
